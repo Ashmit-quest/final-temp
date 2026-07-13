@@ -459,6 +459,7 @@ export default function Index() {
   const [showToast, setShowToast] = useState(false);
   const activePillRef = useRef<HTMLButtonElement>(null);
   const [pillTop, setPillTop] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   // Lazy Preparation/Activation States
   const [prepared, setPrepared] = useState<Record<string, boolean>>({ overview: true });
@@ -493,6 +494,7 @@ export default function Index() {
 
   // Fetch all DB-backed data
   const loadData = async () => {
+    setLoading(true);
     try {
       const [repRes, campRes, txnRes, setRes] = await Promise.all([
         fetch(`${API_URL}/api/reports`),
@@ -514,6 +516,11 @@ export default function Index() {
       }
     } catch (err) {
       console.error("Error fetching console data:", err);
+    } finally {
+      // Simulate/ensure a smooth loading minimum time to look incredibly premium
+      setTimeout(() => {
+        setLoading(false);
+      }, 1100);
     }
   };
 
@@ -817,6 +824,18 @@ export default function Index() {
       </div>
       <div className="grain"></div>
       <div className="spotlight" id="spot"></div>
+
+      {loading && (
+        <div className="loading-screen">
+          <div className="brand-mark animate-pulse" style={{ width: '64px', height: '64px', borderRadius: '18px' }}></div>
+          <div className="display loading-text" style={{ marginTop: '16px', fontSize: '20px', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text)' }}>
+            Cadence
+          </div>
+          <div style={{ fontSize: '11px', color: 'var(--text-faint)', letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: '4px' }}>
+            Preparing Console...
+          </div>
+        </div>
+      )}
 
       <div className="app">
         <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${sidebarOpen ? 'open' : ''}`} id="sidebar">
