@@ -75,10 +75,14 @@ function smoothPath(pts: number[][]) {
 }
 
 // Components
-const CountUp = ({ target, prefix = '', suffix = '', dec = 0 }: { target: number, prefix?: string, suffix?: string, dec?: number }) => {
+const CountUp = ({ target, prefix = '', suffix = '', dec = 0, active = true }: { target: number, prefix?: string, suffix?: string, dec?: number, active?: boolean }) => {
   const [val, setVal] = useState(0);
 
   useEffect(() => {
+    if (!active) {
+      setVal(0);
+      return;
+    }
     let startTime: number;
     const dur = 1400;
     const isRM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -95,16 +99,16 @@ const CountUp = ({ target, prefix = '', suffix = '', dec = 0 }: { target: number
       if (p < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
-  }, [target]);
+  }, [target, active]);
 
   return <>{prefix}{val.toLocaleString(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec })}{suffix}</>;
 };
 
-const KpiCard = ({ kpi, index, live = true }: { kpi: typeof KPIS[0], index: number, live?: boolean }) => {
+const KpiCard = ({ kpi, index, live = true, active = true }: { kpi: typeof KPIS[0], index: number, live?: boolean, active?: boolean }) => {
   const [sparkData, setSparkData] = useState(kpi.spk);
 
   useEffect(() => {
-    if (!live) return;
+    if (!live || !active) return;
     const isRM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (isRM) return;
 
@@ -117,7 +121,7 @@ const KpiCard = ({ kpi, index, live = true }: { kpi: typeof KPIS[0], index: numb
       });
     }, 2600 + index * 200);
     return () => clearInterval(interval);
-  }, [index, live]);
+  }, [index, live, active]);
 
   return (
     <div className="card kpi reveal">
@@ -129,7 +133,7 @@ const KpiCard = ({ kpi, index, live = true }: { kpi: typeof KPIS[0], index: numb
           </svg>
         </span>
       </div>
-      <div className="kpi-val"><CountUp target={kpi.val} prefix={kpi.pfx} suffix={kpi.sfx} dec={kpi.dec} /></div>
+      <div className="kpi-val"><CountUp target={kpi.val} prefix={kpi.pfx} suffix={kpi.sfx} dec={kpi.dec} active={active} /></div>
       <div className="kpi-foot">
         <span className={`delta ${kpi.up ? 'up' : 'down'}`}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
@@ -230,11 +234,15 @@ const AreaChart = ({ series, w = 760, h = 264 }: { series: typeof SERIES, w?: nu
   );
 };
 
-const GaugeCard = ({ title, pct, subtitle, l1, l2, color }: { title: string, pct: number, subtitle: string, l1: any, l2: any, color: string }) => {
+const GaugeCard = ({ title, pct, subtitle, l1, l2, color, active = true }: { title: string, pct: number, subtitle: string, l1: any, l2: any, color: string, active?: boolean }) => {
   const [offset, setOffset] = useState(2 * Math.PI * 72);
   const c = 2 * Math.PI * 72;
 
   useEffect(() => {
+    if (!active) {
+      setOffset(c);
+      return;
+    }
     let startTime: number;
     const dur = 1600;
     const isRM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -252,7 +260,7 @@ const GaugeCard = ({ title, pct, subtitle, l1, l2, color }: { title: string, pct
       if (p < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
-  }, [pct, c]);
+  }, [pct, c, active]);
 
   return (
     <div className="card gauge-card reveal">
@@ -263,7 +271,7 @@ const GaugeCard = ({ title, pct, subtitle, l1, l2, color }: { title: string, pct
           <circle cx="90" cy="90" r="72" fill="none" stroke={color} strokeWidth="14" strokeLinecap="round" transform="rotate(-90 90 90)" strokeDasharray={c} strokeDashoffset={offset} style={{ filter: 'drop-shadow(0 0 12px var(--glow))' }} />
         </svg>
         <div className="gauge-num">
-          <div className="gauge-big mono"><CountUp target={pct} />%</div>
+          <div className="gauge-big mono"><CountUp target={pct} active={active} />%</div>
           <div className="gauge-cap">{subtitle}</div>
         </div>
       </div>
@@ -275,13 +283,19 @@ const GaugeCard = ({ title, pct, subtitle, l1, l2, color }: { title: string, pct
   );
 };
 
-const BarChart = ({ data }: { data: [string, number][] }) => {
+const BarChart = ({ data, active = true }: { data: [string, number][], active?: boolean }) => {
   const mx = Math.max(...data.map(d => d[1]), 1);
   const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 350);
-    return () => clearTimeout(timer);
-  }, []);
+    if (active) {
+      setMounted(false);
+      const timer = setTimeout(() => setMounted(true), 50);
+      return () => clearTimeout(timer);
+    } else {
+      setMounted(false);
+    }
+  }, [active]);
 
   return (
     <div className="bars">
@@ -399,9 +413,10 @@ export default function Index() {
     const reveals = document.querySelectorAll('.reveal');
     reveals.forEach((el, i) => {
       el.classList.remove('in');
-      setTimeout(() => el.classList.add('in'), window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : i * 70);
+      const delay = reducedMotion ? 0 : i * 70;
+      setTimeout(() => el.classList.add('in'), delay);
     });
-  }, [view]);
+  }, [view, reducedMotion]);
 
   // Initial Toast
   useEffect(() => {
@@ -705,7 +720,7 @@ export default function Index() {
             {/* OVERVIEW */}
             <section className={`view ${view === 'overview' ? 'on' : ''}`}>
               <div className="grid kpis">
-                {KPIS.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} />)}
+                {KPIS.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} active={view === 'overview'} />)}
               </div>
               <div className="grid layout">
                 <div className="stack">
@@ -731,20 +746,21 @@ export default function Index() {
                         ))}
                       </div>
                     </div>
-                    {view === 'overview' && <AreaChart series={getFilteredSeries()} />}
+                    {view === 'overview' && <AreaChart key={`${view}-${activeRange}-${activeSeries.join('-')}`} series={getFilteredSeries()} />}
                   </div>
                   <div className="grid two">
                     <div className="card reveal">
                       <div className="card-h"><div className="card-t"><span className="tag" style={{ background: 'var(--accent-2)' }}></span>Traffic by channel</div></div>
-                      <BarChart data={BARS} />
+                      <BarChart data={BARS} active={view === 'overview'} />
                     </div>
                     <GaugeCard 
                       title="Goal completion" 
                       pct={77} 
                       subtitle="of Q3 target" 
-                      l1={{ label: 'Booked', val: <CountUp target={1.84} prefix="$" suffix="M" dec={2} /> }}
+                      l1={{ label: 'Booked', val: <CountUp target={1.84} prefix="$" suffix="M" dec={2} active={view === 'overview'} /> }}
                       l2={{ label: 'Target', val: '$2.4M' }}
                       color="var(--accent)"
+                      active={view === 'overview'}
                     />
                   </div>
                 </div>
@@ -773,12 +789,12 @@ export default function Index() {
             {/* ANALYTICS */}
             <section className={`view ${view === 'analytics' ? 'on' : ''}`}>
               <div className="grid kpis">
-                {KPIS.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} />)}
+                {KPIS.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} active={view === 'analytics'} />)}
               </div>
               <div className="grid two">
                 <div className="card chart-card reveal">
                   <div className="card-h"><div className="card-t"><span className="tag"></span>Engagement trend</div></div>
-                  {view === 'analytics' && <AreaChart series={getFilteredSeries().slice(0, 2)} h={280} />}
+                  {view === 'analytics' && <AreaChart key={`${view}-${activeRange}-${activeSeries.join('-')}`} series={getFilteredSeries().slice(0, 2)} h={280} />}
                 </div>
                 <GaugeCard 
                   title="Retention health" 
@@ -787,12 +803,13 @@ export default function Index() {
                   l1={{ label: 'Churned', val: '3.1%' }}
                   l2={{ label: 'Cohort', val: '18.4k' }}
                   color="var(--accent-2)"
+                  active={view === 'analytics'}
                 />
               </div>
               <div className="grid full" style={{ marginTop: '18px' }}>
                 <div className="card reveal">
                   <div className="card-h"><div className="card-t"><span className="tag" style={{ background: 'var(--accent-2)' }}></span>Acquisition by source</div></div>
-                  <BarChart data={BARS2} />
+                  <BarChart data={BARS2} active={view === 'analytics'} />
                 </div>
               </div>
             </section>
@@ -800,7 +817,7 @@ export default function Index() {
             {/* TRANSACTIONS */}
             <section className={`view ${view === 'transactions' ? 'on' : ''}`}>
               <div className="grid kpis">
-                {KPIS.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} />)}
+                {KPIS.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} active={view === 'transactions'} />)}
               </div>
               <div className="grid full">
                 <div className="card reveal">
@@ -816,20 +833,43 @@ export default function Index() {
             {/* AUDIENCE */}
             <section className={`view ${view === 'audience' ? 'on' : ''}`}>
               <div className="grid kpis">
-                {KPIS.map((k, i) => <KpiCard key={i} kpi={{ ...k, label: k.label + ' (Audience)' }} index={i} live={liveStats} />)}
+                {KPIS.map((k, i) => <KpiCard key={i} kpi={{ ...k, label: k.label + ' (Audience)' }} index={i} live={liveStats} active={view === 'audience'} />)}
               </div>
-              <div className="grid two">
-                <div className="card chart-card reveal">
-                  <div className="card-h">
-                    <div className="card-t"><span className="tag"></span>Audience Growth</div>
+              <div className="grid layout">
+                <div className="stack">
+                  <div className="card chart-card reveal">
+                    <div className="card-h">
+                      <div className="card-t"><span className="tag"></span>Audience Growth</div>
+                    </div>
+                    {view === 'audience' && <AreaChart key={`${view}-${activeRange}-${activeSeries.join('-')}`} series={[SERIES[1], SERIES[2]]} h={280} />}
                   </div>
-                  {view === 'audience' && <AreaChart series={[SERIES[1], SERIES[2]]} h={280} />}
+                  <div className="grid two">
+                    <div className="card reveal">
+                      <div className="card-h">
+                        <div className="card-t"><span className="tag" style={{ background: 'var(--accent)' }}></span>Top Demographics</div>
+                      </div>
+                      <BarChart data={BARS_AUDIENCE} active={view === 'audience'} />
+                    </div>
+                    <GaugeCard 
+                      title="Activation rate" 
+                      pct={68} 
+                      subtitle="Completed profile" 
+                      l1={{ label: 'Active', val: '12.5k' }}
+                      l2={{ label: 'Target', val: '18.4k' }}
+                      color="var(--accent-3)"
+                      active={view === 'audience'}
+                    />
+                  </div>
                 </div>
-                <div className="card reveal">
-                  <div className="card-h">
-                    <div className="card-t"><span className="tag" style={{ background: 'var(--accent)' }}></span>Top Demographics</div>
+                <div className="stack">
+                  <div className="card reveal">
+                    <div className="card-h"><div className="card-t"><span className="tag" style={{ background: 'var(--accent-3)' }}></span>Live activity</div></div>
+                    <ul className="feed">
+                      {FEED.map((f, i) => (
+                        <li key={i}><span className="fdot"></span><div className="ftxt">{f.t}</div><div className="ftime">{f.tm}</div></li>
+                      ))}
+                    </ul>
                   </div>
-                  <BarChart data={BARS_AUDIENCE} />
                 </div>
               </div>
             </section>
