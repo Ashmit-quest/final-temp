@@ -1,11 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 // Data Constants
-const KPIS = [
+const KPIS_OVERVIEW = [
   { label: 'Active users', val: 24817, pfx: '', sfx: '', dec: 0, delta: '+12.4%', up: true, ico: 'M12 2a5 5 0 100 10 5 5 0 000-10zM3 22c0-5 4-8 9-8s9 3 9 8', spk: [8, 12, 10, 15, 13, 18, 16, 22, 20, 26], col: 'var(--accent)' },
   { label: 'Revenue', val: 184920, pfx: '$', sfx: '', dec: 0, delta: '+8.1%', up: true, ico: 'M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6', spk: [20, 18, 22, 19, 24, 23, 28, 26, 31, 34], col: 'var(--accent-2)' },
   { label: 'Conversion', val: 3.84, pfx: '', sfx: '%', dec: 2, delta: '-0.6%', up: false, ico: 'M22 12h-4l-3 9L9 3l-3 9H2', spk: [14, 16, 15, 13, 14, 12, 13, 11, 12, 10], col: 'var(--accent-3)' },
   { label: 'Avg latency', val: 142, pfx: '', sfx: 'ms', dec: 0, delta: '-18ms', up: true, ico: 'M13 2L3 14h7l-1 8 10-12h-7l1-8z', spk: [26, 22, 24, 20, 18, 19, 15, 16, 13, 12], col: 'var(--accent)' },
+];
+
+const KPIS_ANALYTICS = [
+  { label: 'Sessions', val: 58204, pfx: '', sfx: '', dec: 0, delta: '+18.2%', up: true, ico: 'M12 2a5 5 0 100 10 5 5 0 000-10zM3 22c0-5 4-8 9-8s9 3 9 8', spk: [12, 15, 13, 19, 21, 24, 22, 28, 26, 32], col: 'var(--accent)' },
+  { label: 'Pages/visit', val: 4.7, pfx: '', sfx: '', dec: 1, delta: '+4.3%', up: true, ico: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20M4 19.5V3.5A2.5 2.5 0 0 1 6.5 1M20 3v14', spk: [3.2, 3.5, 3.8, 4.1, 4.0, 4.3, 4.2, 4.5, 4.4, 4.7], col: 'var(--accent-2)' },
+  { label: 'Engagement', val: 61.4, pfx: '', sfx: '%', dec: 1, delta: '+5.7%', up: true, ico: 'M22 12h-4l-3 9L9 3l-3 9H2', spk: [51, 53, 52, 55, 54, 58, 57, 60, 59, 61.4], col: 'var(--accent-3)' },
+  { label: 'New signups', val: 1286, pfx: '', sfx: '', dec: 0, delta: '+9.1%', up: true, ico: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', spk: [80, 95, 90, 110, 105, 120, 115, 130, 125, 140], col: 'var(--accent)' },
+];
+
+const KPIS_TRANSACTIONS = [
+  { label: 'Gross volume', val: 92480, pfx: '$', sfx: '', dec: 0, delta: '+15.2%', up: true, ico: 'M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6', spk: [10, 12, 11, 15, 14, 18, 17, 22, 20, 26], col: 'var(--accent)' },
+  { label: 'Avg. order', val: 184, pfx: '$', sfx: '', dec: 0, delta: '+2.1%', up: true, ico: 'M6 2L3 6v14a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0', spk: [170, 172, 171, 175, 174, 178, 177, 182, 180, 184], col: 'var(--accent-2)' },
+  { label: 'Success rate', val: 97.6, pfx: '', sfx: '%', dec: 1, delta: '+0.4%', up: true, ico: 'M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4L12 14.01l-3-3', spk: [96.5, 96.8, 97.0, 97.2, 97.1, 97.3, 97.4, 97.5, 97.4, 97.6], col: 'var(--pos)' },
+  { label: 'Payouts', val: 88120, pfx: '$', sfx: '', dec: 0, delta: '+11.8%', up: true, ico: 'M17 9V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2M9 15h12M11 11l-2 2 2 2', spk: [18, 22, 20, 25, 23, 28, 26, 31, 30, 34], col: 'var(--accent-3)' },
+];
+
+const KPIS_AUDIENCE = [
+  { label: 'New users', val: 4102, pfx: '', sfx: '', dec: 0, delta: '+24.1%', up: true, ico: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', spk: [15, 18, 16, 22, 20, 25, 23, 29, 27, 34], col: 'var(--accent)' },
+  { label: 'Returning', val: 20715, pfx: '', sfx: '', dec: 0, delta: '+10.2%', up: true, ico: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', spk: [60, 65, 63, 70, 68, 74, 72, 78, 76, 82], col: 'var(--accent-2)' },
+  { label: 'Visits/user', val: 3.4, pfx: '', sfx: '', dec: 1, delta: '+8.3%', up: true, ico: 'M22 12h-4l-3 9L9 3l-3 9H2', spk: [2.8, 2.9, 3.0, 3.1, 3.1, 3.2, 3.2, 3.3, 3.3, 3.4], col: 'var(--accent-3)' },
+  { label: 'Countries', val: 74, pfx: '', sfx: '', dec: 0, delta: '+3 new', up: true, ico: 'M12 2a10 10 0 0 0-10 10 10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2zm0 2a8 8 0 0 1 8 8 8 8 0 0 1-8 8 8 8 0 0 1-8-8 8 8 0 0 1 8-8z', spk: [68, 69, 70, 71, 71, 72, 72, 73, 73, 74], col: 'var(--accent)' },
 ];
 
 const FEED = [
@@ -16,13 +37,17 @@ const FEED = [
   { t: <>Report exported by <b>Ari R.</b></>, tm: '1 hr ago' },
 ];
 
-const TXN = [
+const TXN_ALL = [
   { n: 'Priya Nair', e: 'Scale · annual', amt: '$4,800', s: 'ok', st: 'Paid', c: 'var(--accent)' },
   { n: 'Marcus Vale', e: 'Pro · monthly', amt: '$149', s: 'ok', st: 'Paid', c: 'var(--accent-2)' },
   { n: 'Dana Osei', e: 'Scale · monthly', amt: '$620', s: 'wait', st: 'Pending', c: 'var(--accent-3)' },
   { n: 'Leo Fischer', e: 'Starter · monthly', amt: '$29', s: 'ok', st: 'Paid', c: 'var(--accent)' },
   { n: 'Yuki Tanaka', e: 'Pro · annual', amt: '$1,490', s: 'fail', st: 'Failed', c: 'var(--neg)' },
   { n: 'Sofia Reyes', e: 'Scale · annual', amt: '$5,240', s: 'ok', st: 'Paid', c: 'var(--accent-2)' },
+  { n: 'Alex Chen', e: 'Pro · monthly', amt: '$149', s: 'ok', st: 'Paid', c: 'var(--accent)' },
+  { n: 'Elena Rostova', e: 'Scale · monthly', amt: '$620', s: 'ok', st: 'Paid', c: 'var(--accent-2)' },
+  { n: 'John Doe', e: 'Starter · annual', amt: '$290', s: 'wait', st: 'Pending', c: 'var(--accent-3)' },
+  { n: 'Amara Diallo', e: 'Pro · annual', amt: '$1,490', s: 'ok', st: 'Paid', c: 'var(--accent)' }
 ];
 
 const BARS = [['Direct', 82], ['Organic', 96], ['Referral', 54], ['Social', 68], ['Email', 43], ['Paid', 71]] as [string, number][];
@@ -119,7 +144,7 @@ const CountUp = ({ target, prefix = '', suffix = '', dec = 0, active = true }: {
   return <>{prefix}{val.toLocaleString(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec })}{suffix}</>;
 };
 
-const KpiCard = ({ kpi, index, live = true, active = true }: { kpi: typeof KPIS[0], index: number, live?: boolean, active?: boolean }) => {
+const KpiCard = ({ kpi, index, live = true, active = true }: { kpi: typeof KPIS_OVERVIEW[0], index: number, live?: boolean, active?: boolean }) => {
   const [sparkData, setSparkData] = useState(kpi.spk);
 
   useEffect(() => {
@@ -327,8 +352,8 @@ const BarChart = ({ data, active = true }: { data: [string, number][], active?: 
   );
 };
 
-const TransactionTable = ({ filterQuery = '', onRowClick }: { filterQuery?: string, onRowClick?: (idx: number) => void }) => {
-  const filtered = TXN.map((t, idx) => ({ ...t, originalIndex: idx })).filter(t => 
+const TransactionTable = ({ list, filterQuery = '', onRowClick }: { list: typeof TXN_ALL, filterQuery?: string, onRowClick?: (txn: typeof TXN_ALL[0]) => void }) => {
+  const filtered = list.filter(t => 
     t.n.toLowerCase().includes(filterQuery.toLowerCase()) ||
     t.e.toLowerCase().includes(filterQuery.toLowerCase()) ||
     t.st.toLowerCase().includes(filterQuery.toLowerCase())
@@ -340,12 +365,12 @@ const TransactionTable = ({ filterQuery = '', onRowClick }: { filterQuery?: stri
         <tr><th>Customer</th><th>Plan</th><th>Amount</th><th>Status</th></tr>
       </thead>
       <tbody>
-        {filtered.map((t) => (
+        {filtered.map((t, index) => (
           <tr 
-            key={t.originalIndex} 
+            key={index} 
             data-n={t.n}
             style={{ cursor: 'pointer' }}
-            onClick={() => onRowClick && onRowClick(t.originalIndex)}
+            onClick={() => onRowClick && onRowClick(t)}
           >
             <td>
               <div className="who">
@@ -396,7 +421,7 @@ export default function Index() {
 
   // Drawer (Inspection details) State
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [inspectedTxnIndex, setInspectedTxnIndex] = useState<number | null>(null);
+  const [selectedTxn, setSelectedTxn] = useState<typeof TXN_ALL[0] | null>(null);
 
   // Main Chart Custom Options
   const [activeRange, setActiveRange] = useState('1M');
@@ -546,8 +571,8 @@ export default function Index() {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, unread: false } : n));
   };
 
-  const handleRowClick = (idx: number) => {
-    setInspectedTxnIndex(idx);
+  const handleRowClick = (txn: typeof TXN_ALL[0]) => {
+    setSelectedTxn(txn);
     setDrawerOpen(true);
   };
 
@@ -609,7 +634,7 @@ export default function Index() {
     const matchedPages = SEARCH_PAGES.filter(p => p.title.toLowerCase().includes(q))
       .map(p => ({ ...p, type: 'page' }));
 
-    const matchedCustomers = TXN.filter(t => t.n.toLowerCase().includes(q) || t.e.toLowerCase().includes(q))
+    const matchedCustomers = TXN_ALL.filter(t => t.n.toLowerCase().includes(q) || t.e.toLowerCase().includes(q))
       .map(t => ({ id: t.n, title: t.n, subtitle: t.e, type: 'customer', name: t.n }));
 
     return { pages: matchedPages, customers: matchedCustomers };
@@ -617,9 +642,6 @@ export default function Index() {
 
   const { pages: searchedPages, customers: searchedCustomers } = getFilteredSearchItems();
   const hasSearchResults = searchedPages.length > 0 || searchedCustomers.length > 0;
-
-  // Selected Transaction for Drawer
-  const activeTxn = inspectedTxnIndex !== null ? TXN[inspectedTxnIndex] : null;
 
   return (
     <>
@@ -842,7 +864,7 @@ export default function Index() {
             {/* OVERVIEW */}
             <section className={`view ${view === 'overview' ? 'on' : ''}`}>
               <div className="grid kpis">
-                {KPIS.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} active={view === 'overview'} />)}
+                {KPIS_OVERVIEW.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} active={view === 'overview'} />)}
               </div>
               <div className="grid layout">
                 <div className="stack">
@@ -903,7 +925,7 @@ export default function Index() {
                     <div className="card-t">Recent transactions</div>
                     <button className="range" style={{ border: '1px solid var(--glass-border)' }} onClick={() => handleNav('transactions')}>View all →</button>
                   </div>
-                  <TransactionTable filterQuery={searchQuery} onRowClick={handleRowClick} />
+                  <TransactionTable list={TXN_ALL.slice(0, 6)} filterQuery={searchQuery} onRowClick={handleRowClick} />
                 </div>
               </div>
             </section>
@@ -912,7 +934,7 @@ export default function Index() {
             {prepared.analytics && (
               <section className={`view ${view === 'analytics' ? 'on' : ''}`}>
                 <div className="grid kpis">
-                  {KPIS.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} active={view === 'analytics'} />)}
+                  {KPIS_ANALYTICS.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} active={view === 'analytics'} />)}
                 </div>
                 <div className="grid two">
                   <div className="card chart-card reveal">
@@ -942,14 +964,14 @@ export default function Index() {
             {prepared.transactions && (
               <section className={`view ${view === 'transactions' ? 'on' : ''}`}>
                 <div className="grid kpis">
-                  {KPIS.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} active={view === 'transactions'} />)}
+                  {KPIS_TRANSACTIONS.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} active={view === 'transactions'} />)}
                 </div>
                 <div className="grid full">
                   <div className="card reveal">
                     <div className="card-h">
                       <div className="card-t">All transactions</div>
                     </div>
-                    <TransactionTable filterQuery={searchQuery} onRowClick={handleRowClick} />
+                    <TransactionTable list={TXN_ALL} filterQuery={searchQuery} onRowClick={handleRowClick} />
                   </div>
                 </div>
               </section>
@@ -959,7 +981,7 @@ export default function Index() {
             {prepared.audience && (
               <section className={`view ${view === 'audience' ? 'on' : ''}`}>
                 <div className="grid kpis">
-                  {KPIS.map((k, i) => <KpiCard key={i} kpi={{ ...k, label: k.label + ' (Audience)' }} index={i} live={liveStats} active={view === 'audience'} />)}
+                  {KPIS_AUDIENCE.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} active={view === 'audience'} />)}
                 </div>
                 <div className="grid layout">
                   <div className="stack">
@@ -1087,7 +1109,7 @@ export default function Index() {
       {/* Transaction Details Slide-out Drawer Component */}
       <div className={`drawer-scrim ${drawerOpen ? 'open' : ''}`} onClick={() => setDrawerOpen(false)}></div>
       <aside className={`drawer ${drawerOpen ? 'open' : ''}`}>
-        {activeTxn && (
+        {selectedTxn && (
           <>
             <div className="drawer-h">
               <h3 className="display" style={{ fontSize: '16px', fontWeight: 600 }}>Inspection Panel</h3>
@@ -1100,23 +1122,23 @@ export default function Index() {
             </div>
 
             <div className="drawer-profile">
-              <span className="av" id="dAv" style={{ background: `linear-gradient(135deg,${activeTxn.c},var(--accent-2))` }}>
-                {activeTxn.n.split(' ').map(x => x[0]).join('')}
+              <span className="av" id="dAv" style={{ background: `linear-gradient(135deg,${selectedTxn.c},var(--accent-2))` }}>
+                {selectedTxn.n.split(' ').map(x => x[0]).join('')}
               </span>
               <div>
-                <div id="dName" style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text)' }}>{activeTxn.n}</div>
-                <div id="dPlan" style={{ fontSize: '12.5px', color: 'var(--text-dim)', marginTop: '2px' }}>{activeTxn.e}</div>
+                <div id="dName" style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text)' }}>{selectedTxn.n}</div>
+                <div id="dPlan" style={{ fontSize: '12.5px', color: 'var(--text-dim)', marginTop: '2px' }}>{selectedTxn.e}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                <span id="dAmt" className="mono" style={{ fontSize: '18px', fontWeight: 500 }}>{activeTxn.amt}</span>
-                <span id="dStatus"><span className={`pill ${activeTxn.s}`}>{activeTxn.st}</span></span>
+                <span id="dAmt" className="mono" style={{ fontSize: '18px', fontWeight: 500 }}>{selectedTxn.amt}</span>
+                <span id="dStatus"><span className={`pill ${selectedTxn.s}`}>{selectedTxn.st}</span></span>
               </div>
             </div>
 
             <div className="drawer-section">
               <div className="ds-title">Mini Sparkline</div>
               <svg className="spark" viewBox="0 0 78 30" style={{ width: '100%', height: '40px' }}>
-                <path d={sparkPath([12, 18, 14, 24, 20, 28, 22, 34])} style={{ stroke: activeTxn.c, fill: 'none', strokeWidth: 2 }} />
+                <path d={sparkPath([12, 18, 14, 24, 20, 28, 22, 34])} style={{ stroke: selectedTxn.c, fill: 'none', strokeWidth: 2 }} />
               </svg>
             </div>
 
@@ -1129,17 +1151,17 @@ export default function Index() {
                   <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>Jul 12, 2026 · 14:32</div>
                 </div>
                 <div className="tl-item">
-                  <span className={`tl-dot ${activeTxn.s === 'ok' ? 'done' : activeTxn.s === 'wait' ? 'active' : 'fail'}`}></span>
+                  <span className={`tl-dot ${selectedTxn.s === 'ok' ? 'done' : selectedTxn.s === 'wait' ? 'active' : 'fail'}`}></span>
                   <div style={{ fontSize: '13px', fontWeight: 500 }}>
-                    {activeTxn.s === 'ok' ? 'Payment Cleared' : activeTxn.s === 'wait' ? 'Processing Transfer' : 'Payment Failed'}
+                    {selectedTxn.s === 'ok' ? 'Payment Cleared' : selectedTxn.s === 'wait' ? 'Processing Transfer' : 'Payment Failed'}
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>Jul 12, 2026 · 14:35</div>
                 </div>
                 <div className="tl-item">
-                  <span className={`tl-dot ${activeTxn.s === 'ok' ? 'active' : ''}`}></span>
+                  <span className={`tl-dot ${selectedTxn.s === 'ok' ? 'active' : ''}`}></span>
                   <div style={{ fontSize: '13px', fontWeight: 500 }}>Provisioning Access</div>
                   <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>
-                    {activeTxn.s === 'ok' ? 'Completed successfully' : activeTxn.s === 'wait' ? 'Awaiting clearance' : 'Halted due to exception'}
+                    {selectedTxn.s === 'ok' ? 'Completed successfully' : selectedTxn.s === 'wait' ? 'Awaiting clearance' : 'Halted due to exception'}
                   </div>
                 </div>
               </div>
