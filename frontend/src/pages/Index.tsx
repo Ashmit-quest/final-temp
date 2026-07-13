@@ -1,32 +1,55 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_URL } from '@/config';
 
-// Data Constants
+// Predefined Icon Path Constants using standard Lucide-style SVG shapes
+const ICO = {
+  pulse: 'M22 12h-4l-3 9L9 3l-3 9H2',
+  bolt: 'M13 2L3 14h7l-1 8 10-12h-7l1-8z',
+  users: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+  dollar: 'M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6'
+};
+
+// Local fallback data structures
 const KPIS_OVERVIEW = [
   { label: 'Active users', val: 24817, pfx: '', sfx: '', dec: 0, delta: '+12.4%', up: true, ico: 'M12 2a5 5 0 100 10 5 5 0 000-10zM3 22c0-5 4-8 9-8s9 3 9 8', spk: [8, 12, 10, 15, 13, 18, 16, 22, 20, 26], col: 'var(--accent)' },
-  { label: 'Revenue', val: 184920, pfx: '$', sfx: '', dec: 0, delta: '+8.1%', up: true, ico: 'M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6', spk: [20, 18, 22, 19, 24, 23, 28, 26, 31, 34], col: 'var(--accent-2)' },
-  { label: 'Conversion', val: 3.84, pfx: '', sfx: '%', dec: 2, delta: '-0.6%', up: false, ico: 'M22 12h-4l-3 9L9 3l-3 9H2', spk: [14, 16, 15, 13, 14, 12, 13, 11, 12, 10], col: 'var(--accent-3)' },
-  { label: 'Avg latency', val: 142, pfx: '', sfx: 'ms', dec: 0, delta: '-18ms', up: true, ico: 'M13 2L3 14h7l-1 8 10-12h-7l1-8z', spk: [26, 22, 24, 20, 18, 19, 15, 16, 13, 12], col: 'var(--accent)' },
+  { label: 'Revenue', val: 184920, pfx: '$', sfx: '', dec: 0, delta: '+8.1%', up: true, ico: ICO.dollar, spk: [20, 18, 22, 19, 24, 23, 28, 26, 31, 34], col: 'var(--accent-2)' },
+  { label: 'Conversion', val: 3.84, pfx: '', sfx: '%', dec: 2, delta: '-0.6%', up: false, ico: ICO.pulse, spk: [14, 16, 15, 13, 14, 12, 13, 11, 12, 10], col: 'var(--accent-3)' },
+  { label: 'Avg latency', val: 142, pfx: '', sfx: 'ms', dec: 0, delta: '-18ms', up: true, ico: ICO.bolt, spk: [26, 22, 24, 20, 18, 19, 15, 16, 13, 12], col: 'var(--accent)' },
 ];
 
 const KPIS_ANALYTICS = [
   { label: 'Sessions', val: 58204, pfx: '', sfx: '', dec: 0, delta: '+18.2%', up: true, ico: 'M12 2a5 5 0 100 10 5 5 0 000-10zM3 22c0-5 4-8 9-8s9 3 9 8', spk: [12, 15, 13, 19, 21, 24, 22, 28, 26, 32], col: 'var(--accent)' },
   { label: 'Pages/visit', val: 4.7, pfx: '', sfx: '', dec: 1, delta: '+4.3%', up: true, ico: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20M4 19.5V3.5A2.5 2.5 0 0 1 6.5 1M20 3v14', spk: [3.2, 3.5, 3.8, 4.1, 4.0, 4.3, 4.2, 4.5, 4.4, 4.7], col: 'var(--accent-2)' },
-  { label: 'Engagement', val: 61.4, pfx: '', sfx: '%', dec: 1, delta: '+5.7%', up: true, ico: 'M22 12h-4l-3 9L9 3l-3 9H2', spk: [51, 53, 52, 55, 54, 58, 57, 60, 59, 61.4], col: 'var(--accent-3)' },
-  { label: 'New signups', val: 1286, pfx: '', sfx: '', dec: 0, delta: '+9.1%', up: true, ico: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', spk: [80, 95, 90, 110, 105, 120, 115, 130, 125, 140], col: 'var(--accent)' },
+  { label: 'Engagement', val: 61.4, pfx: '', sfx: '%', dec: 1, delta: '+5.7%', up: true, ico: ICO.pulse, spk: [51, 53, 52, 55, 54, 58, 57, 60, 59, 61.4], col: 'var(--accent-3)' },
+  { label: 'New signups', val: 1286, pfx: '', sfx: '', dec: 0, delta: '+9.1%', up: true, ico: ICO.users, spk: [80, 95, 90, 110, 105, 120, 115, 130, 125, 140], col: 'var(--accent)' },
 ];
 
 const KPIS_TRANSACTIONS = [
-  { label: 'Gross volume', val: 92480, pfx: '$', sfx: '', dec: 0, delta: '+15.2%', up: true, ico: 'M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6', spk: [10, 12, 11, 15, 14, 18, 17, 22, 20, 26], col: 'var(--accent)' },
+  { label: 'Gross volume', val: 92480, pfx: '$', sfx: '', dec: 0, delta: '+15.2%', up: true, ico: ICO.dollar, spk: [10, 12, 11, 15, 14, 18, 17, 22, 20, 26], col: 'var(--accent)' },
   { label: 'Avg. order', val: 184, pfx: '$', sfx: '', dec: 0, delta: '+2.1%', up: true, ico: 'M6 2L3 6v14a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0', spk: [170, 172, 171, 175, 174, 178, 177, 182, 180, 184], col: 'var(--accent-2)' },
   { label: 'Success rate', val: 97.6, pfx: '', sfx: '%', dec: 1, delta: '+0.4%', up: true, ico: 'M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4L12 14.01l-3-3', spk: [96.5, 96.8, 97.0, 97.2, 97.1, 97.3, 97.4, 97.5, 97.4, 97.6], col: 'var(--pos)' },
   { label: 'Payouts', val: 88120, pfx: '$', sfx: '', dec: 0, delta: '+11.8%', up: true, ico: 'M17 9V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2M9 15h12M11 11l-2 2 2 2', spk: [18, 22, 20, 25, 23, 28, 26, 31, 30, 34], col: 'var(--accent-3)' },
 ];
 
 const KPIS_AUDIENCE = [
-  { label: 'New users', val: 4102, pfx: '', sfx: '', dec: 0, delta: '+24.1%', up: true, ico: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', spk: [15, 18, 16, 22, 20, 25, 23, 29, 27, 34], col: 'var(--accent)' },
-  { label: 'Returning', val: 20715, pfx: '', sfx: '', dec: 0, delta: '+10.2%', up: true, ico: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', spk: [60, 65, 63, 70, 68, 74, 72, 78, 76, 82], col: 'var(--accent-2)' },
-  { label: 'Visits/user', val: 3.4, pfx: '', sfx: '', dec: 1, delta: '+8.3%', up: true, ico: 'M22 12h-4l-3 9L9 3l-3 9H2', spk: [2.8, 2.9, 3.0, 3.1, 3.1, 3.2, 3.2, 3.3, 3.3, 3.4], col: 'var(--accent-3)' },
+  { label: 'New users', val: 4102, pfx: '', sfx: '', dec: 0, delta: '+24.1%', up: true, ico: ICO.users, spk: [15, 18, 16, 22, 20, 25, 23, 29, 27, 34], col: 'var(--accent)' },
+  { label: 'Returning', val: 20715, pfx: '', sfx: '', dec: 0, delta: '+10.2%', up: true, ico: ICO.users, spk: [60, 65, 63, 70, 68, 74, 72, 78, 76, 82], col: 'var(--accent-2)' },
+  { label: 'Visits/user', val: 3.4, pfx: '', sfx: '', dec: 1, delta: '+8.3%', up: true, ico: ICO.pulse, spk: [2.8, 2.9, 3.0, 3.1, 3.1, 3.2, 3.2, 3.3, 3.3, 3.4], col: 'var(--accent-3)' },
   { label: 'Countries', val: 74, pfx: '', sfx: '', dec: 0, delta: '+3 new', up: true, ico: 'M12 2a10 10 0 0 0-10 10 10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2zm0 2a8 8 0 0 1 8 8 8 8 0 0 1-8 8 8 8 0 0 1-8-8 8 8 0 0 1 8-8z', spk: [68, 69, 70, 71, 71, 72, 72, 73, 73, 74], col: 'var(--accent)' },
+];
+
+const KPIS_REPORTS = [
+  { label: 'Reports generated', val: 342, pfx: '', sfx: '', dec: 0, delta: '+11%', up: true, ico: ICO.pulse, spk: [10, 12, 11, 14, 13, 16, 15, 18, 17, 20], col: 'var(--accent)' },
+  { label: 'Scheduled', val: 18, pfx: '', sfx: '', dec: 0, delta: '+2', up: true, ico: ICO.bolt, spk: [8, 9, 8, 10, 9, 11, 10, 12, 11, 13], col: 'var(--accent-2)' },
+  { label: 'Exports', val: 1204, pfx: '', sfx: '', dec: 0, delta: '+9.4%', up: true, ico: ICO.users, spk: [14, 16, 15, 18, 17, 20, 19, 22, 21, 24], col: 'var(--accent-3)' },
+  { label: 'Avg build', val: 3.2, pfx: '', sfx: 's', dec: 1, delta: '-0.4s', up: true, ico: ICO.bolt, spk: [22, 20, 21, 18, 19, 16, 17, 15, 14, 12], col: 'var(--accent)' },
+];
+
+const KPIS_CAMPAIGNS = [
+  { label: 'Active campaigns', val: 12, pfx: '', sfx: '', dec: 0, delta: '+3', up: true, ico: ICO.bolt, spk: [6, 7, 7, 9, 8, 10, 11, 10, 12, 13], col: 'var(--accent)' },
+  { label: 'Spend', val: 48200, pfx: '$', sfx: '', dec: 0, delta: '+7.1%', up: true, ico: ICO.dollar, spk: [14, 16, 15, 18, 20, 19, 22, 24, 23, 27], col: 'var(--accent-2)' },
+  { label: 'ROAS', val: 4.2, pfx: '', sfx: 'x', dec: 1, delta: '+0.3%', up: true, ico: ICO.pulse, spk: [16, 17, 16, 18, 19, 18, 20, 21, 20, 23], col: 'var(--accent-3)' },
+  { label: 'CTR', val: 3.1, pfx: '', sfx: '%', dec: 1, delta: '+0.2%', up: true, ico: ICO.pulse, spk: [10, 11, 10, 12, 11, 13, 12, 14, 13, 15], col: 'var(--accent)' },
 ];
 
 const FEED = [
@@ -37,22 +60,10 @@ const FEED = [
   { t: <>Report exported by <b>Ari R.</b></>, tm: '1 hr ago' },
 ];
 
-const TXN_ALL = [
-  { n: 'Priya Nair', e: 'Scale · annual', amt: '$4,800', s: 'ok', st: 'Paid', c: 'var(--accent)' },
-  { n: 'Marcus Vale', e: 'Pro · monthly', amt: '$149', s: 'ok', st: 'Paid', c: 'var(--accent-2)' },
-  { n: 'Dana Osei', e: 'Scale · monthly', amt: '$620', s: 'wait', st: 'Pending', c: 'var(--accent-3)' },
-  { n: 'Leo Fischer', e: 'Starter · monthly', amt: '$29', s: 'ok', st: 'Paid', c: 'var(--accent)' },
-  { n: 'Yuki Tanaka', e: 'Pro · annual', amt: '$1,490', s: 'fail', st: 'Failed', c: 'var(--neg)' },
-  { n: 'Sofia Reyes', e: 'Scale · annual', amt: '$5,240', s: 'ok', st: 'Paid', c: 'var(--accent-2)' },
-  { n: 'Alex Chen', e: 'Pro · monthly', amt: '$149', s: 'ok', st: 'Paid', c: 'var(--accent)' },
-  { n: 'Elena Rostova', e: 'Scale · monthly', amt: '$620', s: 'ok', st: 'Paid', c: 'var(--accent-2)' },
-  { n: 'John Doe', e: 'Starter · annual', amt: '$290', s: 'wait', st: 'Pending', c: 'var(--accent-3)' },
-  { n: 'Amara Diallo', e: 'Pro · annual', amt: '$1,490', s: 'ok', st: 'Paid', c: 'var(--accent)' }
-];
-
 const BARS = [['Direct', 82], ['Organic', 96], ['Referral', 54], ['Social', 68], ['Email', 43], ['Paid', 71]] as [string, number][];
 const BARS2 = [['Search', 88], ['Social', 62], ['Direct', 74], ['Partner', 41], ['Ads', 57]] as [string, number][];
 const BARS_AUDIENCE = [['United States', 124], ['United Kingdom', 82], ['Germany', 64], ['Japan', 52], ['Canada', 41], ['Australia', 38]] as [string, number][];
+const BARS_CAMPAIGNS = [['Search', 72], ['Social', 58], ['Display', 44], ['Email', 31], ['Video', 66]] as [string, number][];
 
 const SEG_DATA = [
   { name: 'Developers', size: '42%', val: '10.4k', growth: '+14.2%', ok: true },
@@ -66,6 +77,8 @@ const SEARCH_PAGES = [
   { id: 'analytics', title: 'Analytics', group: 'Workspace' },
   { id: 'transactions', title: 'Transactions', group: 'Workspace' },
   { id: 'audience', title: 'Audience', group: 'Workspace' },
+  { id: 'reports', title: 'Reports', group: 'Workspace' },
+  { id: 'campaigns', title: 'Campaigns', group: 'Workspace' },
   { id: 'settings', title: 'Settings', group: 'System' }
 ];
 
@@ -114,6 +127,46 @@ function smoothPath(pts: number[][]) {
   return d;
 }
 
+// Interfaces for fetched elements
+interface ReportType {
+  id: string;
+  title: string;
+  type: string;
+  owner: string;
+  status: string;
+  status_class: string;
+  created_at: string;
+}
+
+interface CampaignType {
+  id: string;
+  title: string;
+  channel: string;
+  spend: string;
+  roas: string;
+  status_class: string;
+  created_at: string;
+}
+
+interface TransactionType {
+  id: string;
+  customer_name: string;
+  plan: string;
+  amount: string;
+  status_class: string;
+  status_text: string;
+  color: string;
+  created_at: string;
+}
+
+interface SettingType {
+  is_dark: boolean;
+  selected_swatch: string;
+  live_stats: boolean;
+  reduced_motion: boolean;
+  compact_mode: boolean;
+}
+
 // Components
 const CountUp = ({ target, prefix = '', suffix = '', dec = 0, active = true }: { target: number, prefix?: string, suffix?: string, dec?: number, active?: boolean }) => {
   const [val, setVal] = useState(0);
@@ -144,7 +197,7 @@ const CountUp = ({ target, prefix = '', suffix = '', dec = 0, active = true }: {
   return <>{prefix}{val.toLocaleString(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec })}{suffix}</>;
 };
 
-const KpiCard = ({ kpi, index, live = true, active = true }: { kpi: typeof KPIS_OVERVIEW[0], index: number, live?: boolean, active?: boolean }) => {
+const KpiCard = ({ kpi, index, live = true, active = true }: { kpi: any, index: number, live?: boolean, active?: boolean }) => {
   const [sparkData, setSparkData] = useState(kpi.spk);
 
   useEffect(() => {
@@ -153,7 +206,7 @@ const KpiCard = ({ kpi, index, live = true, active = true }: { kpi: typeof KPIS_
     if (isRM) return;
 
     const interval = setInterval(() => {
-      setSparkData(prev => {
+      setSparkData((prev: any) => {
         const next = [...prev];
         next.shift();
         next.push(Math.max(6, next[next.length - 1] + (Math.random() - .45) * 6));
@@ -352,11 +405,11 @@ const BarChart = ({ data, active = true }: { data: [string, number][], active?: 
   );
 };
 
-const TransactionTable = ({ list, filterQuery = '', onRowClick }: { list: typeof TXN_ALL, filterQuery?: string, onRowClick?: (txn: typeof TXN_ALL[0]) => void }) => {
+const TransactionTable = ({ list, filterQuery = '', onRowClick }: { list: TransactionType[], filterQuery?: string, onRowClick?: (txn: TransactionType) => void }) => {
   const filtered = list.filter(t => 
-    t.n.toLowerCase().includes(filterQuery.toLowerCase()) ||
-    t.e.toLowerCase().includes(filterQuery.toLowerCase()) ||
-    t.st.toLowerCase().includes(filterQuery.toLowerCase())
+    t.customer_name.toLowerCase().includes(filterQuery.toLowerCase()) ||
+    t.plan.toLowerCase().includes(filterQuery.toLowerCase()) ||
+    t.status_text.toLowerCase().includes(filterQuery.toLowerCase())
   );
 
   return (
@@ -367,22 +420,22 @@ const TransactionTable = ({ list, filterQuery = '', onRowClick }: { list: typeof
       <tbody>
         {filtered.map((t, index) => (
           <tr 
-            key={index} 
-            data-n={t.n}
+            key={t.id || index} 
+            data-n={t.customer_name}
             style={{ cursor: 'pointer' }}
             onClick={() => onRowClick && onRowClick(t)}
           >
             <td>
               <div className="who">
-                <span className="av" style={{ background: `linear-gradient(135deg,${t.c},var(--accent-2))` }}>
-                  {t.n.split(' ').map(x => x[0]).join('')}
+                <span className="av" style={{ background: `linear-gradient(135deg,${t.color},var(--accent-2))` }}>
+                  {t.customer_name.split(' ').map(x => x[0]).join('')}
                 </span>
-                {t.n}
+                {t.customer_name}
               </div>
             </td>
-            <td style={{ color: 'var(--text-dim)' }}>{t.e}</td>
-            <td className="amt">{t.amt}</td>
-            <td><span className={`pill ${t.s}`}>{t.st}</span></td>
+            <td style={{ color: 'var(--text-dim)' }}>{t.plan}</td>
+            <td className="amt">{t.amount}</td>
+            <td><span className={`pill ${t.status_class}`}>{t.status_text}</span></td>
           </tr>
         ))}
         {filtered.length === 0 && (
@@ -410,6 +463,11 @@ export default function Index() {
   // Lazy Preparation/Activation States
   const [prepared, setPrepared] = useState<Record<string, boolean>>({ overview: true });
 
+  // Database / Fetched Data States
+  const [reports, setReports] = useState<ReportType[]>([]);
+  const [campaigns, setCampaigns] = useState<CampaignType[]>([]);
+  const [transactions, setTransactions] = useState<TransactionType[]>([]);
+
   // Notifications State
   const [notifications, setNotifications] = useState(initialNotifications);
   const [notiOpen, setNotiOpen] = useState(false);
@@ -421,7 +479,7 @@ export default function Index() {
 
   // Drawer (Inspection details) State
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [selectedTxn, setSelectedTxn] = useState<typeof TXN_ALL[0] | null>(null);
+  const [selectedTxn, setSelectedTxn] = useState<TransactionType | null>(null);
 
   // Main Chart Custom Options
   const [activeRange, setActiveRange] = useState('1M');
@@ -432,6 +490,57 @@ export default function Index() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [compactMode, setCompactMode] = useState(false);
   const [selectedSwatch, setSelectedSwatch] = useState('#9D8CFF');
+
+  // Fetch all DB-backed data
+  const loadData = async () => {
+    try {
+      const [repRes, campRes, txnRes, setRes] = await Promise.all([
+        fetch(`${API_URL}/api/reports`),
+        fetch(`${API_URL}/api/campaigns`),
+        fetch(`${API_URL}/api/transactions`),
+        fetch(`${API_URL}/api/settings`)
+      ]);
+
+      if (repRes.ok) setReports(await repRes.json());
+      if (campRes.ok) setCampaigns(await campRes.json());
+      if (txnRes.ok) setTransactions(await txnRes.json());
+      if (setRes.ok) {
+        const s: SettingType = await setRes.json();
+        setIsDark(s.is_dark);
+        applySwatch(s.selected_swatch);
+        setLiveStats(s.live_stats);
+        setReducedMotion(s.reduced_motion);
+        setCompactMode(s.compact_mode);
+      }
+    } catch (err) {
+      console.error("Error fetching console data:", err);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // Save Settings to Backend helper
+  const updateSetting = async (updates: Partial<SettingType>) => {
+    const nextSettings = {
+      is_dark: updates.is_dark !== undefined ? updates.is_dark : isDark,
+      selected_swatch: updates.selected_swatch !== undefined ? updates.selected_swatch : selectedSwatch,
+      live_stats: updates.live_stats !== undefined ? updates.live_stats : liveStats,
+      reduced_motion: updates.reduced_motion !== undefined ? updates.reduced_motion : reducedMotion,
+      compact_mode: updates.compact_mode !== undefined ? updates.compact_mode : compactMode
+    };
+
+    try {
+      await fetch(`${API_URL}/api/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nextSettings)
+      });
+    } catch (err) {
+      console.error("Error saving settings:", err);
+    }
+  };
 
   // Clock
   useEffect(() => {
@@ -473,8 +582,12 @@ export default function Index() {
 
   // Initial Toast
   useEffect(() => {
-    setTimeout(() => setShowToast(true), 1300);
-    setTimeout(() => setShowToast(false), 5300);
+    const timer1 = setTimeout(() => setShowToast(true), 1300);
+    const timer2 = setTimeout(() => setShowToast(false), 5300);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
   }, []);
 
   // Global Mouse Effects (Spotlight & Tilt)
@@ -557,10 +670,13 @@ export default function Index() {
     document.getElementById('canvas')?.scrollTo(0, 0);
   };
 
-  const applySwatch = (hex: string) => {
+  const applySwatch = (hex: string, persist = false) => {
     document.documentElement.style.setProperty('--accent', hex);
     document.documentElement.style.setProperty('--glow', hexA(hex, 0.45));
     setSelectedSwatch(hex);
+    if (persist) {
+      updateSetting({ selected_swatch: hex });
+    }
   };
 
   const markAllRead = () => {
@@ -571,9 +687,46 @@ export default function Index() {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, unread: false } : n));
   };
 
-  const handleRowClick = (txn: typeof TXN_ALL[0]) => {
+  const handleRowClick = (txn: TransactionType) => {
     setSelectedTxn(txn);
     setDrawerOpen(true);
+  };
+
+  // New Report Creator Handler
+  const handleCreateReport = async () => {
+    const types = ["Financial", "Product", "Retention", "Marketing", "Engineering"];
+    const titles = ["Q4 Revenue Projection", "User Cohort Insights", "Feature Load Times", "Custom Query Export", "Database Integrity Log"];
+    const statusOpts = [
+      { s: "Ready", c: "ok" },
+      { s: "Building", c: "wait" },
+      { s: "Failed", c: "fail" }
+    ];
+
+    const randomType = types[Math.floor(Math.random() * types.length)];
+    const randomTitle = titles[Math.floor(Math.random() * titles.length)];
+    const randomStatus = statusOpts[Math.floor(Math.random() * statusOpts.length)];
+
+    const payload = {
+      title: randomTitle,
+      type: randomType,
+      owner: "Ari Rhodes",
+      status: randomStatus.s,
+      status_class: randomStatus.c
+    };
+
+    try {
+      const res = await fetch(`${API_URL}/api/reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const nextReport = await res.json();
+        setReports(prev => [nextReport, ...prev]);
+      }
+    } catch (err) {
+      console.error("Error creating report:", err);
+    }
   };
 
   // Get Series Data based on Range & Toggle Filters
@@ -595,6 +748,8 @@ export default function Index() {
     analytics: 'Analytics',
     transactions: 'Transactions',
     audience: 'Audience',
+    reports: 'Reports',
+    campaigns: 'Campaigns',
     settings: 'Settings'
   };
 
@@ -603,6 +758,8 @@ export default function Index() {
     analytics: 'Workspace',
     transactions: 'Workspace',
     audience: 'Workspace',
+    reports: 'Workspace',
+    campaigns: 'Workspace',
     settings: 'System'
   };
 
@@ -634,8 +791,8 @@ export default function Index() {
     const matchedPages = SEARCH_PAGES.filter(p => p.title.toLowerCase().includes(q))
       .map(p => ({ ...p, type: 'page' }));
 
-    const matchedCustomers = TXN_ALL.filter(t => t.n.toLowerCase().includes(q) || t.e.toLowerCase().includes(q))
-      .map(t => ({ id: t.n, title: t.n, subtitle: t.e, type: 'customer', name: t.n }));
+    const matchedCustomers = transactions.filter(t => t.customer_name.toLowerCase().includes(q) || t.plan.toLowerCase().includes(q))
+      .map(t => ({ id: t.customer_name, title: t.customer_name, subtitle: t.plan, type: 'customer', name: t.customer_name }));
 
     return { pages: matchedPages, customers: matchedCustomers };
   };
@@ -664,7 +821,7 @@ export default function Index() {
 
           <div className="nav-label">Workspace</div>
           <ul className="nav">
-            <div className="nav-pill" style={{ transform: `translateY(${pillTop}px)`, opacity: ['overview', 'analytics', 'transactions', 'audience'].includes(view) ? 1 : 0 }}></div>
+            <div className="nav-pill" style={{ transform: `translateY(${pillTop}px)`, opacity: ['overview', 'analytics', 'transactions', 'audience', 'reports', 'campaigns'].includes(view) ? 1 : 0 }}></div>
             <li>
               <button 
                 className={`nav-item ${view === 'overview' ? 'active' : ''}`} 
@@ -712,6 +869,27 @@ export default function Index() {
                   <circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
                 </svg>
                 <span className="nav-txt">Audience</span>
+              </button>
+            </li>
+            <li>
+              <button 
+                className={`nav-item ${view === 'reports' ? 'active' : ''}`} 
+                onClick={() => handleNav('reports')}
+                ref={view === 'reports' ? activePillRef : null}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h5"/></svg>
+                <span className="nav-txt">Reports</span>
+              </button>
+            </li>
+            <li>
+              <button 
+                className={`nav-item ${view === 'campaigns' ? 'active' : ''}`} 
+                onClick={() => handleNav('campaigns')}
+                ref={view === 'campaigns' ? activePillRef : null}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>
+                <span className="nav-txt">Campaigns</span>
+                
               </button>
             </li>
           </ul>
@@ -849,7 +1027,11 @@ export default function Index() {
               </div>
             </div>
 
-            <button className="icon-btn" onClick={() => setIsDark(!isDark)} aria-label="Toggle theme">
+            <button className="icon-btn" onClick={() => {
+              const nextVal = !isDark;
+              setIsDark(nextVal);
+              updateSetting({ is_dark: nextVal });
+            }} aria-label="Toggle theme">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 {isDark ? (
                   <><circle cx="12" cy="12" r="4.5" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19" /></>
@@ -925,7 +1107,7 @@ export default function Index() {
                     <div className="card-t">Recent transactions</div>
                     <button className="range" style={{ border: '1px solid var(--glass-border)' }} onClick={() => handleNav('transactions')}>View all →</button>
                   </div>
-                  <TransactionTable list={TXN_ALL.slice(0, 6)} filterQuery={searchQuery} onRowClick={handleRowClick} />
+                  <TransactionTable list={transactions.slice(0, 6)} filterQuery={searchQuery} onRowClick={handleRowClick} />
                 </div>
               </div>
             </section>
@@ -971,7 +1153,7 @@ export default function Index() {
                     <div className="card-h">
                       <div className="card-t">All transactions</div>
                     </div>
-                    <TransactionTable list={TXN_ALL} filterQuery={searchQuery} onRowClick={handleRowClick} />
+                    <TransactionTable list={transactions} filterQuery={searchQuery} onRowClick={handleRowClick} />
                   </div>
                 </div>
               </section>
@@ -1037,6 +1219,103 @@ export default function Index() {
               </section>
             )}
 
+            {/* REPORTS */}
+            {prepared.reports && (
+              <section className={`view ${view === 'reports' ? 'on' : ''}`} id="v-reports">
+                <div className="grid kpis">
+                  {KPIS_REPORTS.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} active={view === 'reports'} />)}
+                </div>
+                <div className="grid two">
+                  <div className="card chart-card reveal">
+                    <div className="card-h">
+                      <div className="card-t"><span className="tag"></span>Reports generated</div>
+                    </div>
+                    {view === 'reports' && <AreaChart key={`${view}-${activeRange}-${activeSeries.join('-')}`} series={getFilteredSeries().slice(2, 3)} h={280} />}
+                  </div>
+                  <GaugeCard 
+                    title="Storage used" 
+                    pct={62} 
+                    subtitle="of 500 GB" 
+                    l1={{ label: 'Used', val: '310 GB' }}
+                    l2={{ label: 'Free', val: '190 GB' }}
+                    color="var(--accent-3)"
+                    active={view === 'reports'}
+                  />
+                </div>
+                <div className="grid full" style={{ marginTop: '18px' }}>
+                  <div className="card reveal">
+                    <div className="card-h">
+                      <div className="card-t">Recent reports</div>
+                      <button className="range" style={{ border: '1px solid var(--glass-border)' }} onClick={handleCreateReport}>New report +</button>
+                    </div>
+                    <table className="tbl" id="repTable">
+                      <thead>
+                        <tr><th>Report</th><th>Type</th><th>Owner</th><th>Status</th></tr>
+                      </thead>
+                      <tbody>
+                        {reports.map((r, i) => (
+                          <tr key={r.id || i}>
+                            <td>{r.title}</td>
+                            <td style={{ color: 'var(--text-dim)' }}>{r.type}</td>
+                            <td>{r.owner}</td>
+                            <td><span className={`pill ${r.status_class}`}>{r.status}</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* CAMPAIGNS */}
+            {prepared.campaigns && (
+              <section className={`view ${view === 'campaigns' ? 'on' : ''}`} id="v-campaigns">
+                <div className="grid kpis">
+                  {KPIS_CAMPAIGNS.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} active={view === 'campaigns'} />)}
+                </div>
+                <div className="grid two">
+                  <div className="card reveal">
+                    <div className="card-h">
+                      <div className="card-t"><span className="tag" style={{ background: 'var(--accent-2)' }}></span>Spend by channel</div>
+                    </div>
+                    <BarChart data={BARS_CAMPAIGNS} active={view === 'campaigns'} />
+                  </div>
+                  <GaugeCard 
+                    title="Budget used" 
+                    pct={74} 
+                    subtitle="of Q3 budget" 
+                    l1={{ label: 'Spent', val: '$48.2k' }}
+                    l2={{ label: 'Budget', val: '$65k' }}
+                    color="var(--accent)"
+                    active={view === 'campaigns'}
+                  />
+                </div>
+                <div className="grid full" style={{ marginTop: '18px' }}>
+                  <div className="card reveal">
+                    <div className="card-h">
+                      <div className="card-t">Top campaigns</div>
+                    </div>
+                    <table className="tbl" id="campTable">
+                      <thead>
+                        <tr><th>Campaign</th><th>Channel</th><th>Spend</th><th>ROAS</th></tr>
+                      </thead>
+                      <tbody>
+                        {campaigns.map((c, i) => (
+                          <tr key={c.id || i}>
+                            <td>{c.title}</td>
+                            <td style={{ color: 'var(--text-dim)' }}>{c.channel}</td>
+                            <td className="amt">{c.spend}</td>
+                            <td><span className={`pill ${c.status_class}`}>{c.roas}</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </section>
+            )}
+
             {/* SETTINGS */}
             <section className={`view ${view === 'settings' ? 'on' : ''}`}>
               <div className="grid two">
@@ -1048,8 +1327,14 @@ export default function Index() {
                     <div>
                       <p style={{ fontSize: '12.5px', color: 'var(--text-dim)', marginBottom: '8px' }}>Select interface appearance</p>
                       <div className="seg-theme" id="segTheme">
-                        <button className={`seg-btn ${!isDark ? 'on' : ''}`} onClick={() => setIsDark(false)}>Light</button>
-                        <button className={`seg-btn ${isDark ? 'on' : ''}`} onClick={() => setIsDark(true)}>Dark</button>
+                        <button className={`seg-btn ${!isDark ? 'on' : ''}`} onClick={() => {
+                          setIsDark(false);
+                          updateSetting({ is_dark: false });
+                        }}>Light</button>
+                        <button className={`seg-btn ${isDark ? 'on' : ''}`} onClick={() => {
+                          setIsDark(true);
+                          updateSetting({ is_dark: true });
+                        }}>Dark</button>
                       </div>
                     </div>
 
@@ -1061,7 +1346,7 @@ export default function Index() {
                             key={s.hex}
                             className={`swatch ${selectedSwatch === s.hex ? 'on' : ''}`}
                             style={{ backgroundColor: s.hex }}
-                            onClick={() => applySwatch(s.hex)}
+                            onClick={() => applySwatch(s.hex, true)}
                             title={s.label}
                           />
                         ))}
@@ -1080,7 +1365,11 @@ export default function Index() {
                         <div style={{ fontWeight: 600, fontSize: '13px' }}>Live Sync Stats</div>
                         <div style={{ fontSize: '11.5px', color: 'var(--text-faint)' }}>Update sparklines in real-time</div>
                       </div>
-                      <div className="sw-btn" id="swLive" data-on={liveStats} onClick={() => setLiveStats(!liveStats)}></div>
+                      <div className="sw-btn" id="swLive" data-on={liveStats} onClick={() => {
+                        const nextVal = !liveStats;
+                        setLiveStats(nextVal);
+                        updateSetting({ live_stats: nextVal });
+                      }}></div>
                     </div>
 
                     <div className="sw-row">
@@ -1088,7 +1377,11 @@ export default function Index() {
                         <div style={{ fontWeight: 600, fontSize: '13px' }}>Reduced Motion</div>
                         <div style={{ fontSize: '11.5px', color: 'var(--text-faint)' }}>Minimize transition animations</div>
                       </div>
-                      <div className="sw-btn" id="swMotion" data-on={reducedMotion} onClick={() => setReducedMotion(!reducedMotion)}></div>
+                      <div className="sw-btn" id="swMotion" data-on={reducedMotion} onClick={() => {
+                        const nextVal = !reducedMotion;
+                        setReducedMotion(nextVal);
+                        updateSetting({ reduced_motion: nextVal });
+                      }}></div>
                     </div>
 
                     <div className="sw-row">
@@ -1096,7 +1389,11 @@ export default function Index() {
                         <div style={{ fontWeight: 600, fontSize: '13px' }}>Compact Density</div>
                         <div style={{ fontSize: '11.5px', color: 'var(--text-faint)' }}>Reduce paddings for high data density</div>
                       </div>
-                      <div className="sw-btn" id="swCompact" data-on={compactMode} onClick={() => setCompactMode(!compactMode)}></div>
+                      <div className="sw-btn" id="swCompact" data-on={compactMode} onClick={() => {
+                        const nextVal = !compactMode;
+                        setCompactMode(nextVal);
+                        updateSetting({ compact_mode: nextVal });
+                      }}></div>
                     </div>
                   </div>
                 </div>
@@ -1122,23 +1419,23 @@ export default function Index() {
             </div>
 
             <div className="drawer-profile">
-              <span className="av" id="dAv" style={{ background: `linear-gradient(135deg,${selectedTxn.c},var(--accent-2))` }}>
-                {selectedTxn.n.split(' ').map(x => x[0]).join('')}
+              <span className="av" id="dAv" style={{ background: `linear-gradient(135deg,${selectedTxn.color},var(--accent-2))` }}>
+                {selectedTxn.customer_name.split(' ').map(x => x[0]).join('')}
               </span>
               <div>
-                <div id="dName" style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text)' }}>{selectedTxn.n}</div>
-                <div id="dPlan" style={{ fontSize: '12.5px', color: 'var(--text-dim)', marginTop: '2px' }}>{selectedTxn.e}</div>
+                <div id="dName" style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text)' }}>{selectedTxn.customer_name}</div>
+                <div id="dPlan" style={{ fontSize: '12.5px', color: 'var(--text-dim)', marginTop: '2px' }}>{selectedTxn.plan}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                <span id="dAmt" className="mono" style={{ fontSize: '18px', fontWeight: 500 }}>{selectedTxn.amt}</span>
-                <span id="dStatus"><span className={`pill ${selectedTxn.s}`}>{selectedTxn.st}</span></span>
+                <span id="dAmt" className="mono" style={{ fontSize: '18px', fontWeight: 500 }}>{selectedTxn.amount}</span>
+                <span id="dStatus"><span className={`pill ${selectedTxn.status_class}`}>{selectedTxn.status_text}</span></span>
               </div>
             </div>
 
             <div className="drawer-section">
               <div className="ds-title">Mini Sparkline</div>
               <svg className="spark" viewBox="0 0 78 30" style={{ width: '100%', height: '40px' }}>
-                <path d={sparkPath([12, 18, 14, 24, 20, 28, 22, 34])} style={{ stroke: selectedTxn.c, fill: 'none', strokeWidth: 2 }} />
+                <path d={sparkPath([12, 18, 14, 24, 20, 28, 22, 34])} style={{ stroke: selectedTxn.color, fill: 'none', strokeWidth: 2 }} />
               </svg>
             </div>
 
@@ -1151,17 +1448,17 @@ export default function Index() {
                   <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>Jul 12, 2026 · 14:32</div>
                 </div>
                 <div className="tl-item">
-                  <span className={`tl-dot ${selectedTxn.s === 'ok' ? 'done' : selectedTxn.s === 'wait' ? 'active' : 'fail'}`}></span>
+                  <span className={`tl-dot ${selectedTxn.status_class === 'ok' ? 'done' : selectedTxn.status_class === 'wait' ? 'active' : 'fail'}`}></span>
                   <div style={{ fontSize: '13px', fontWeight: 500 }}>
-                    {selectedTxn.s === 'ok' ? 'Payment Cleared' : selectedTxn.s === 'wait' ? 'Processing Transfer' : 'Payment Failed'}
+                    {selectedTxn.status_class === 'ok' ? 'Payment Cleared' : selectedTxn.status_class === 'wait' ? 'Processing Transfer' : 'Payment Failed'}
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>Jul 12, 2026 · 14:35</div>
                 </div>
                 <div className="tl-item">
-                  <span className={`tl-dot ${selectedTxn.s === 'ok' ? 'active' : ''}`}></span>
+                  <span className={`tl-dot ${selectedTxn.status_class === 'ok' ? 'active' : ''}`}></span>
                   <div style={{ fontSize: '13px', fontWeight: 500 }}>Provisioning Access</div>
                   <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>
-                    {selectedTxn.s === 'ok' ? 'Completed successfully' : selectedTxn.s === 'wait' ? 'Awaiting clearance' : 'Halted due to exception'}
+                    {selectedTxn.status_class === 'ok' ? 'Completed successfully' : selectedTxn.status_class === 'wait' ? 'Awaiting clearance' : 'Halted due to exception'}
                   </div>
                 </div>
               </div>
