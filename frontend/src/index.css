@@ -125,6 +125,39 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .search svg { width: 17px; height: 17px; flex: none; }
 .search input { background: none; border: none; color: var(--text); font-size: 13px; width: 100%; outline: none; }
 .search kbd { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-faint); border: 1px solid var(--glass-border); border-radius: 5px; padding: 1px 5px; }
+
+/* ============ SEARCH SUGGESTIONS PANEL ============ */
+.searchwrap { position: relative; }
+.search-panel {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  width: 270px;
+  border-radius: 12px;
+  padding: 6px;
+  z-index: 60;
+  background: rgba(17,16,40,.95);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(30px) saturate(1.4);
+  -webkit-backdrop-filter: blur(30px) saturate(1.4);
+  box-shadow: 0 30px 70px -20px rgba(0,0,0,.85);
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+  transition: .22s;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.search-panel.open { opacity: 1; transform: none; pointer-events: auto; }
+[data-theme="light"] .search-panel {
+  background: rgba(255,255,255,.97);
+  box-shadow: 0 30px 70px -24px rgba(60,50,120,.4);
+}
+.sp-group-title { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-faint); padding: 6px 10px 4px; }
+.sp-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: background .2s; font-size: 12.5px; text-align: left; color: var(--text-dim); width: 100%; }
+.sp-item:hover { background: var(--glass-2); color: var(--text); }
+.sp-item svg { width: 14px; height: 14px; stroke-width: 2; color: var(--accent); flex-shrink: 0; }
 .clock { font-family: 'JetBrains Mono'; font-size: 12.5px; color: var(--text-dim); display: flex; align-items: center; gap: 8px; }
 .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--pos); position: relative; }
 .pulse::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--pos); animation: pulse 2s ease-out infinite; }

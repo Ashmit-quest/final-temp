@@ -36,6 +36,14 @@ const SEG_DATA = [
   { name: 'Marketers', size: '12%', val: '2.9k', growth: '+22.0%', ok: true }
 ];
 
+const SEARCH_PAGES = [
+  { id: 'overview', title: 'Overview', group: 'Workspace' },
+  { id: 'analytics', title: 'Analytics', group: 'Workspace' },
+  { id: 'transactions', title: 'Transactions', group: 'Workspace' },
+  { id: 'audience', title: 'Audience', group: 'Workspace' },
+  { id: 'settings', title: 'Settings', group: 'System' }
+];
+
 function gen(seed: number, n = 30, base = 40, amp = 22) {
   let v = base, out = [];
   for (let i = 0; i < n; i++) {
@@ -377,8 +385,9 @@ export default function Index() {
   const [notiOpen, setNotiOpen] = useState(false);
   const unreadCount = notifications.filter(n => n.unread).length;
 
-  // Search State
+  // Search State & Panel
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchPanelOpen, setSearchPanelOpen] = useState(false);
 
   // Main Chart Custom Options
   const [activeRange, setActiveRange] = useState('1M');
@@ -492,12 +501,15 @@ export default function Index() {
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
 
-  // Outer Click to Close Notification Panel
+  // Outer Click to Close Notification & Search Panels
   useEffect(() => {
     const handleOuterClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (!target.closest('.notiwrap')) {
         setNotiOpen(false);
+      }
+      if (!target.closest('.searchwrap')) {
+        setSearchPanelOpen(false);
       }
     };
     document.addEventListener('click', handleOuterClick);
@@ -554,6 +566,43 @@ export default function Index() {
     audience: 'Workspace',
     settings: 'System'
   };
+
+  // Search Logic
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    if (val.trim()) {
+      setSearchPanelOpen(true);
+    } else {
+      setSearchPanelOpen(false);
+    }
+  };
+
+  const handleSearchItemClick = (item: any) => {
+    setSearchQuery('');
+    setSearchPanelOpen(false);
+    if (item.type === 'page') {
+      handleNav(item.id);
+    } else if (item.type === 'customer') {
+      handleNav('transactions');
+      setSearchQuery(item.name);
+    }
+  };
+
+  const getFilteredSearchItems = () => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return { pages: [], customers: [] };
+
+    const matchedPages = SEARCH_PAGES.filter(p => p.title.toLowerCase().includes(q))
+      .map(p => ({ ...p, type: 'page' }));
+
+    const matchedCustomers = TXN.filter(t => t.n.toLowerCase().includes(q) || t.e.toLowerCase().includes(q))
+      .map(t => ({ id: t.n, title: t.n, subtitle: t.e, type: 'customer', name: t.n }));
+
+    return { pages: matchedPages, customers: matchedCustomers };
+  };
+
+  const { pages: searchedPages, customers: searchedCustomers } = getFilteredSearchItems();
+  const hasSearchResults = searchedPages.length > 0 || searchedCustomers.length > 0;
 
   return (
     <>
@@ -670,15 +719,60 @@ export default function Index() {
               <div className="crumb">Cadence / {viewGroups[view]} / {viewTitles[view]}</div>
             </div>
             <div className="spacer"></div>
-            <label className="search">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
-              <input 
-                placeholder="Search metrics, users…" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <kbd>⌘K</kbd>
-            </label>
+            
+            {/* Search component wrapped in searchwrap */}
+            <div className="searchwrap">
+              <label className="search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
+                <input 
+                  placeholder="Search metrics, users…" 
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  onFocus={() => { if (searchQuery.trim()) setSearchPanelOpen(true); }}
+                />
+                <kbd>⌘K</kbd>
+              </label>
+
+              <div className={`search-panel ${searchPanelOpen ? 'open' : ''}`} id="searchPanel">
+                {hasSearchResults ? (
+                  <>
+                    {searchedPages.length > 0 && (
+                      <>
+                        <div className="sp-group-title">Pages</div>
+                        {searchedPages.map(p => (
+                          <button key={p.id} className="sp-item" data-nav={p.id} onClick={() => handleSearchItemClick(p)}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18" /></svg>
+                            <div>
+                              <div style={{ fontWeight: 500 }}>{p.title}</div>
+                              <div style={{ fontSize: '10.5px', color: 'var(--text-faint)' }}>{p.group}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </>
+                    )}
+                    {searchedCustomers.length > 0 && (
+                      <>
+                        <div className="sp-group-title">Customers</div>
+                        {searchedCustomers.map(c => (
+                          <button key={c.id} className="sp-item" data-cust={c.name} onClick={() => handleSearchItemClick(c)}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                            <div>
+                              <div style={{ fontWeight: 500 }}>{c.title}</div>
+                              <div style={{ fontSize: '10.5px', color: 'var(--text-faint)' }}>{c.subtitle}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <div style={{ padding: '14px 10px', textAlign: 'center', color: 'var(--text-faint)', fontSize: '12px' }}>
+                    No results found
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="clock"><span className="pulse"></span><span>{time || '--:--:--'}</span></div>
             
             {/* Notification Dropdown wrapped in notiwrap */}
@@ -837,7 +931,6 @@ export default function Index() {
                   <div className="card reveal">
                     <div className="card-h">
                       <div className="card-t">All transactions</div>
-                      <span className="pill wait">12 pending review</span>
                     </div>
                     <TransactionTable filterQuery={searchQuery} />
                   </div>
