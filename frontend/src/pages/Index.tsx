@@ -327,8 +327,8 @@ const BarChart = ({ data, active = true }: { data: [string, number][], active?: 
   );
 };
 
-const TransactionTable = ({ filterQuery = '' }: { filterQuery?: string }) => {
-  const filtered = TXN.filter(t => 
+const TransactionTable = ({ filterQuery = '', onRowClick }: { filterQuery?: string, onRowClick?: (idx: number) => void }) => {
+  const filtered = TXN.map((t, idx) => ({ ...t, originalIndex: idx })).filter(t => 
     t.n.toLowerCase().includes(filterQuery.toLowerCase()) ||
     t.e.toLowerCase().includes(filterQuery.toLowerCase()) ||
     t.st.toLowerCase().includes(filterQuery.toLowerCase())
@@ -340,8 +340,12 @@ const TransactionTable = ({ filterQuery = '' }: { filterQuery?: string }) => {
         <tr><th>Customer</th><th>Plan</th><th>Amount</th><th>Status</th></tr>
       </thead>
       <tbody>
-        {filtered.map((t, i) => (
-          <tr key={i}>
+        {filtered.map((t) => (
+          <tr 
+            key={t.originalIndex} 
+            style={{ cursor: 'pointer' }}
+            onClick={() => onRowClick && onRowClick(t.originalIndex)}
+          >
             <td>
               <div className="who">
                 <span className="av" style={{ background: `linear-gradient(135deg,${t.c},var(--accent-2))` }}>
@@ -388,6 +392,10 @@ export default function Index() {
   // Search State & Panel
   const [searchQuery, setSearchQuery] = useState('');
   const [searchPanelOpen, setSearchPanelOpen] = useState(false);
+
+  // Drawer (Inspection details) State
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [inspectedTxnIndex, setInspectedTxnIndex] = useState<number | null>(null);
 
   // Main Chart Custom Options
   const [activeRange, setActiveRange] = useState('1M');
@@ -537,6 +545,11 @@ export default function Index() {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, unread: false } : n));
   };
 
+  const handleRowClick = (idx: number) => {
+    setInspectedTxnIndex(idx);
+    setDrawerOpen(true);
+  };
+
   // Get Series Data based on Range & Toggle Filters
   const getFilteredSeries = () => {
     let points = 30;
@@ -603,6 +616,9 @@ export default function Index() {
 
   const { pages: searchedPages, customers: searchedCustomers } = getFilteredSearchItems();
   const hasSearchResults = searchedPages.length > 0 || searchedCustomers.length > 0;
+
+  // Selected Transaction for Drawer
+  const activeTxn = inspectedTxnIndex !== null ? TXN[inspectedTxnIndex] : null;
 
   return (
     <>
@@ -886,7 +902,7 @@ export default function Index() {
                     <div className="card-t">Recent transactions</div>
                     <button className="range" style={{ border: '1px solid var(--glass-border)' }} onClick={() => handleNav('transactions')}>View all →</button>
                   </div>
-                  <TransactionTable filterQuery={searchQuery} />
+                  <TransactionTable filterQuery={searchQuery} onRowClick={handleRowClick} />
                 </div>
               </div>
             </section>
@@ -932,7 +948,7 @@ export default function Index() {
                     <div className="card-h">
                       <div className="card-t">All transactions</div>
                     </div>
-                    <TransactionTable filterQuery={searchQuery} />
+                    <TransactionTable filterQuery={searchQuery} onRowClick={handleRowClick} />
                   </div>
                 </div>
               </section>
@@ -1066,6 +1082,70 @@ export default function Index() {
           </div>
         </div>
       </div>
+
+      {/* Transaction Details Slide-out Drawer Component */}
+      <div className={`drawer-scrim ${drawerOpen ? 'open' : ''}`} onClick={() => setDrawerOpen(false)}></div>
+      <aside className={`drawer ${drawerOpen ? 'open' : ''}`}>
+        {activeTxn && (
+          <>
+            <div className="drawer-h">
+              <h3 className="display" style={{ fontSize: '16px', fontWeight: 600 }}>Inspection Panel</h3>
+              <button className="drawer-close" aria-label="Close" onClick={() => setDrawerOpen(false)}>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+
+            <div className="drawer-profile">
+              <span className="av" id="dAv" style={{ background: `linear-gradient(135deg,${activeTxn.c},var(--accent-2))` }}>
+                {activeTxn.n.split(' ').map(x => x[0]).join('')}
+              </span>
+              <div>
+                <div id="dName" style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text)' }}>{activeTxn.n}</div>
+                <div id="dPlan" style={{ fontSize: '12.5px', color: 'var(--text-dim)', marginTop: '2px' }}>{activeTxn.e}</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                <span id="dAmt" className="mono" style={{ fontSize: '18px', fontWeight: 500 }}>{activeTxn.amt}</span>
+                <span id="dStatus"><span className={`pill ${activeTxn.s}`}>{activeTxn.st}</span></span>
+              </div>
+            </div>
+
+            <div className="drawer-section">
+              <div className="ds-title">Mini Sparkline</div>
+              <svg className="spark" viewBox="0 0 78 30" style={{ width: '100%', height: '40px' }}>
+                <path d={sparkPath([12, 18, 14, 24, 20, 28, 22, 34])} style={{ stroke: activeTxn.c, fill: 'none', strokeWidth: 2 }} />
+              </svg>
+            </div>
+
+            <div className="drawer-section">
+              <div className="ds-title">Status Timeline</div>
+              <div className="timeline">
+                <div className="tl-item">
+                  <span className="tl-dot done"></span>
+                  <div style={{ fontSize: '13px', fontWeight: 500 }}>Invoice Created</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>Jul 12, 2026 · 14:32</div>
+                </div>
+                <div className="tl-item">
+                  <span className={`tl-dot ${activeTxn.s === 'ok' ? 'done' : activeTxn.s === 'wait' ? 'active' : 'fail'}`}></span>
+                  <div style={{ fontSize: '13px', fontWeight: 500 }}>
+                    {activeTxn.s === 'ok' ? 'Payment Cleared' : activeTxn.s === 'wait' ? 'Processing Transfer' : 'Payment Failed'}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>Jul 12, 2026 · 14:35</div>
+                </div>
+                <div className="tl-item">
+                  <span className={`tl-dot ${activeTxn.s === 'ok' ? 'active' : ''}`}></span>
+                  <div style={{ fontSize: '13px', fontWeight: 500 }}>Provisioning Access</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>
+                    {activeTxn.s === 'ok' ? 'Completed successfully' : activeTxn.s === 'wait' ? 'Awaiting clearance' : 'Halted due to exception'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </aside>
 
       <div className={`scrim ${sidebarOpen ? 'show' : ''}`} onClick={() => setSidebarOpen(false)}></div>
       <div className={`toast ${showToast ? 'show' : ''}`}>
