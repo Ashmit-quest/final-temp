@@ -343,6 +343,7 @@ const TransactionTable = ({ filterQuery = '', onRowClick }: { filterQuery?: stri
         {filtered.map((t) => (
           <tr 
             key={t.originalIndex} 
+            data-n={t.n}
             style={{ cursor: 'pointer' }}
             onClick={() => onRowClick && onRowClick(t.originalIndex)}
           >
