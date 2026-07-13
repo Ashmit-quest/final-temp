@@ -579,11 +579,20 @@ export default function Index() {
 
   // Reveal Animations
   useEffect(() => {
+    // Skip animation reset if preparing is already done for this view
+    // This allows instantaneous display on cached views
+    
+    // Instead of re-triggering animations every single switch, only reveal if not previously shown
+    // Let's use a simpler approach: just add the class if it's not there.
     const reveals = document.querySelectorAll('.reveal');
     reveals.forEach((el, i) => {
-      el.classList.remove('in');
-      const delay = reducedMotion ? 0 : i * 70;
-      setTimeout(() => el.classList.add('in'), delay);
+      // Fast path: if reduced motion or if tab was already visited
+      if (reducedMotion) {
+        el.classList.add('in');
+      } else if (!el.classList.contains('in')) {
+        const delay = i * 40; // Reduced delay for snappier feel
+        setTimeout(() => el.classList.add('in'), delay);
+      }
     });
   }, [view, reducedMotion]);
 
