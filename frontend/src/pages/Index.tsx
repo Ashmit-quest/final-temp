@@ -29,6 +29,13 @@ const BARS = [['Direct', 82], ['Organic', 96], ['Referral', 54], ['Social', 68],
 const BARS2 = [['Search', 88], ['Social', 62], ['Direct', 74], ['Partner', 41], ['Ads', 57]] as [string, number][];
 const BARS_AUDIENCE = [['United States', 124], ['United Kingdom', 82], ['Germany', 64], ['Japan', 52], ['Canada', 41], ['Australia', 38]] as [string, number][];
 
+const SEG_DATA = [
+  { name: 'Developers', size: '42%', val: '10.4k', growth: '+14.2%', ok: true },
+  { name: 'Designers', size: '28%', val: '6.9k', growth: '+8.1%', ok: true },
+  { name: 'Product Managers', size: '18%', val: '4.4k', growth: '-1.4%', ok: false },
+  { name: 'Marketers', size: '12%', val: '2.9k', growth: '+22.0%', ok: true }
+];
+
 function gen(seed: number, n = 30, base = 40, amp = 22) {
   let v = base, out = [];
   for (let i = 0; i < n; i++) {
@@ -362,6 +369,9 @@ export default function Index() {
   const activePillRef = useRef<HTMLButtonElement>(null);
   const [pillTop, setPillTop] = useState(0);
 
+  // Lazy Preparation/Activation States
+  const [prepared, setPrepared] = useState<Record<string, boolean>>({ overview: true });
+
   // Notifications State
   const [notifications, setNotifications] = useState(initialNotifications);
   const [notiOpen, setNotiOpen] = useState(false);
@@ -495,6 +505,7 @@ export default function Index() {
   }, []);
 
   const handleNav = (v: string) => {
+    setPrepared(prev => ({ ...prev, [v]: true }));
     setView(v);
     setSidebarOpen(false);
     document.getElementById('canvas')?.scrollTo(0, 0);
@@ -787,92 +798,112 @@ export default function Index() {
             </section>
 
             {/* ANALYTICS */}
-            <section className={`view ${view === 'analytics' ? 'on' : ''}`}>
-              <div className="grid kpis">
-                {KPIS.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} active={view === 'analytics'} />)}
-              </div>
-              <div className="grid two">
-                <div className="card chart-card reveal">
-                  <div className="card-h"><div className="card-t"><span className="tag"></span>Engagement trend</div></div>
-                  {view === 'analytics' && <AreaChart key={`${view}-${activeRange}-${activeSeries.join('-')}`} series={getFilteredSeries().slice(0, 2)} h={280} />}
+            {prepared.analytics && (
+              <section className={`view ${view === 'analytics' ? 'on' : ''}`}>
+                <div className="grid kpis">
+                  {KPIS.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} active={view === 'analytics'} />)}
                 </div>
-                <GaugeCard 
-                  title="Retention health" 
-                  pct={91} 
-                  subtitle="30-day retained" 
-                  l1={{ label: 'Churned', val: '3.1%' }}
-                  l2={{ label: 'Cohort', val: '18.4k' }}
-                  color="var(--accent-2)"
-                  active={view === 'analytics'}
-                />
-              </div>
-              <div className="grid full" style={{ marginTop: '18px' }}>
-                <div className="card reveal">
-                  <div className="card-h"><div className="card-t"><span className="tag" style={{ background: 'var(--accent-2)' }}></span>Acquisition by source</div></div>
-                  <BarChart data={BARS2} active={view === 'analytics'} />
+                <div className="grid two">
+                  <div className="card chart-card reveal">
+                    <div className="card-h"><div className="card-t"><span className="tag"></span>Engagement trend</div></div>
+                    {view === 'analytics' && <AreaChart key={`${view}-${activeRange}-${activeSeries.join('-')}`} series={getFilteredSeries().slice(0, 2)} h={280} />}
+                  </div>
+                  <GaugeCard 
+                    title="Retention health" 
+                    pct={91} 
+                    subtitle="30-day retained" 
+                    l1={{ label: 'Churned', val: '3.1%' }}
+                    l2={{ label: 'Cohort', val: '18.4k' }}
+                    color="var(--accent-2)"
+                    active={view === 'analytics'}
+                  />
                 </div>
-              </div>
-            </section>
+                <div className="grid full" style={{ marginTop: '18px' }}>
+                  <div className="card reveal">
+                    <div className="card-h"><div className="card-t"><span className="tag" style={{ background: 'var(--accent-2)' }}></span>Acquisition by source</div></div>
+                    <BarChart data={BARS2} active={view === 'analytics'} />
+                  </div>
+                </div>
+              </section>
+            )}
 
             {/* TRANSACTIONS */}
-            <section className={`view ${view === 'transactions' ? 'on' : ''}`}>
-              <div className="grid kpis">
-                {KPIS.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} active={view === 'transactions'} />)}
-              </div>
-              <div className="grid full">
-                <div className="card reveal">
-                  <div className="card-h">
-                    <div className="card-t">All transactions</div>
-                    <span className="pill wait">12 pending review</span>
-                  </div>
-                  <TransactionTable filterQuery={searchQuery} />
+            {prepared.transactions && (
+              <section className={`view ${view === 'transactions' ? 'on' : ''}`}>
+                <div className="grid kpis">
+                  {KPIS.map((k, i) => <KpiCard key={i} kpi={k} index={i} live={liveStats} active={view === 'transactions'} />)}
                 </div>
-              </div>
-            </section>
+                <div className="grid full">
+                  <div className="card reveal">
+                    <div className="card-h">
+                      <div className="card-t">All transactions</div>
+                      <span className="pill wait">12 pending review</span>
+                    </div>
+                    <TransactionTable filterQuery={searchQuery} />
+                  </div>
+                </div>
+              </section>
+            )}
 
             {/* AUDIENCE */}
-            <section className={`view ${view === 'audience' ? 'on' : ''}`}>
-              <div className="grid kpis">
-                {KPIS.map((k, i) => <KpiCard key={i} kpi={{ ...k, label: k.label + ' (Audience)' }} index={i} live={liveStats} active={view === 'audience'} />)}
-              </div>
-              <div className="grid layout">
-                <div className="stack">
-                  <div className="card chart-card reveal">
-                    <div className="card-h">
-                      <div className="card-t"><span className="tag"></span>Audience Growth</div>
-                    </div>
-                    {view === 'audience' && <AreaChart key={`${view}-${activeRange}-${activeSeries.join('-')}`} series={[SERIES[1], SERIES[2]]} h={280} />}
-                  </div>
-                  <div className="grid two">
-                    <div className="card reveal">
+            {prepared.audience && (
+              <section className={`view ${view === 'audience' ? 'on' : ''}`}>
+                <div className="grid kpis">
+                  {KPIS.map((k, i) => <KpiCard key={i} kpi={{ ...k, label: k.label + ' (Audience)' }} index={i} live={liveStats} active={view === 'audience'} />)}
+                </div>
+                <div className="grid layout">
+                  <div className="stack">
+                    <div className="card chart-card reveal">
                       <div className="card-h">
-                        <div className="card-t"><span className="tag" style={{ background: 'var(--accent)' }}></span>Top Demographics</div>
+                        <div className="card-t"><span className="tag"></span>Audience Growth</div>
                       </div>
-                      <BarChart data={BARS_AUDIENCE} active={view === 'audience'} />
+                      {view === 'audience' && <AreaChart key={`${view}-${activeRange}-${activeSeries.join('-')}`} series={[SERIES[1], SERIES[2]]} h={280} />}
                     </div>
-                    <GaugeCard 
-                      title="Activation rate" 
-                      pct={68} 
-                      subtitle="Completed profile" 
-                      l1={{ label: 'Active', val: '12.5k' }}
-                      l2={{ label: 'Target', val: '18.4k' }}
-                      color="var(--accent-3)"
-                      active={view === 'audience'}
-                    />
+                    <div className="grid two">
+                      <div className="card reveal">
+                        <div className="card-h">
+                          <div className="card-t"><span className="tag" style={{ background: 'var(--accent)' }}></span>Top Demographics</div>
+                        </div>
+                        <BarChart data={BARS_AUDIENCE} active={view === 'audience'} />
+                      </div>
+                      <GaugeCard 
+                        title="Activation rate" 
+                        pct={68} 
+                        subtitle="Completed profile" 
+                        l1={{ label: 'Active', val: '12.5k' }}
+                        l2={{ label: 'Target', val: '18.4k' }}
+                        color="var(--accent-3)"
+                        active={view === 'audience'}
+                      />
+                    </div>
+                  </div>
+                  <div className="stack">
+                    <div className="card reveal bg-glass">
+                      <div className="card-h">
+                        <div className="card-t"><span className="tag" style={{ background: 'var(--accent)' }}></span>Audience Segments</div>
+                      </div>
+                      <table className="tbl" id="segTable">
+                        <thead>
+                          <tr><th>Segment</th><th>Size</th><th>Users</th><th>Growth</th></tr>
+                        </thead>
+                        <tbody>
+                          {SEG_DATA.map((s, i) => (
+                            <tr key={i}>
+                              <td style={{ fontWeight: 600 }}>{s.name}</td>
+                              <td>{s.size}</td>
+                              <td className="mono">{s.val}</td>
+                              <td>
+                                <span className={`pill ${s.ok ? 'ok' : 'fail'}`}>{s.growth}</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
-                <div className="stack">
-                  <div className="card reveal">
-                    <div className="card-h"><div className="card-t"><span className="tag" style={{ background: 'var(--accent-3)' }}></span>Live activity</div></div>
-                    <ul className="feed">
-                      {FEED.map((f, i) => (
-                        <li key={i}><span className="fdot"></span><div className="ftxt">{f.t}</div><div className="ftime">{f.tm}</div></li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </section>
+              </section>
+            )}
 
             {/* SETTINGS */}
             <section className={`view ${view === 'settings' ? 'on' : ''}`}>
