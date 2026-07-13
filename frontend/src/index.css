@@ -273,15 +273,19 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border-radius: 14px;
   padding: 6px;
   z-index: 60;
-  background: var(--glass);
+  background: rgba(17,16,40,.95);
   border: 1px solid var(--glass-border);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: var(--shadow);
+  backdrop-filter: blur(30px) saturate(1.4);
+  -webkit-backdrop-filter: blur(30px) saturate(1.4);
+  box-shadow: 0 30px 70px -20px rgba(0,0,0,.85);
   opacity: 0;
   transform: translateY(-8px);
   pointer-events: none;
   transition: .22s;
+}
+[data-theme="light"] .noti-panel {
+  background: rgba(255,255,255,.97);
+  box-shadow: 0 30px 70px -24px rgba(60,50,120,.4);
 }
 .noti-panel.open { opacity: 1; transform: none; pointer-events: auto; }
 .noti-h {

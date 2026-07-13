@@ -585,7 +585,7 @@ export default function Index() {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path d="M4 7h16M4 7l3-3M4 7l3 3M20 17H4m16 0l-3-3m3 3l-3 3" />
                 </svg>
-                <span className="nav-txt">Transactions</span><span className="nav-badge">12</span>
+                <span className="nav-txt">Transactions</span>
               </button>
             </li>
             <li>
