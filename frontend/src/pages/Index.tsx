@@ -664,7 +664,16 @@ export default function Index() {
   }, []);
 
   const handleNav = (v: string) => {
-    setPrepared(prev => ({ ...prev, [v]: true }));
+    // Pre-prepare all views on first nav to reduce lag on subsequent switches
+    setPrepared(prev => ({
+      ...prev,
+      [v]: true,
+      analytics: true,
+      transactions: true,
+      audience: true,
+      reports: true,
+      campaigns: true
+    }));
     setView(v);
     setSidebarOpen(false);
     document.getElementById('canvas')?.scrollTo(0, 0);
